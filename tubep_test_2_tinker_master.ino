@@ -13,29 +13,43 @@ void handleRoot() {
 }
 
 
-void TurnOn(){
-    server.stop();
-    test_time = millis();
-    Pul_Motor = 0;
+void GoUp(){
+    // server.stop();
+    // test_time = millis();
+    // Pul_Motor = 0;
     digitalWrite(PIN_DIR_MOTOR, HIGH);          //chieu quay thuan
     //tickerSetMotor.attach_ms(1, setPulMotor);  //every 1ms
     tickerSetMotor.start();
     server.send(200, "text/html", "{\"status\":\"success\"}");
-    ECHOLN("TurnOn!");
+    ECHOLN("go_up");
 }
 
-void TurnOff(){
-    server.stop();
-    test_time = millis();
-    time_start_speed = millis();
-    Pul_Motor = 0;
+void GoDown(){
+    // server.stop();
+    // test_time = millis();
+    // time_start_speed = millis();
+    // Pul_Motor = 0;
     digitalWrite(PIN_DIR_MOTOR, LOW);           //chieu quay nghich
     //tickerSetMotor.attach_ms(1, setPulMotor);  //every 1ms
     //tickerSpeed.attach_ms(25, caculate_Speed);  //every 25
     tickerSetMotor.start();
-    tickerSpeed.start();
+    //tickerSpeed.start();
     server.send(200, "text/html", "{\"status\":\"success\"}");
-    ECHOLN("TurnOff!");
+    ECHOLN("go_down!");
+}
+
+void Stop(){
+    ECHOLN("Stop");
+    server.send(200, "text/html", "{\"status\":\"success\"}");
+    tickerSetMotor.stop();
+}
+
+void Action(){
+    ECHOLN("Action");
+    digitalWrite(PIN_ENCODER_MOTOR, HIGH);
+    delay(1000);
+    digitalWrite(PIN_ENCODER_MOTOR, LOW);
+    server.send(200, "text/html", "{\"status\":\"success\"}");
 }
 
 void ControlLed(){
@@ -185,7 +199,7 @@ void ConfigMode(){
     ECHOLN(server.arg("plain"));
     JsonObject& rootData = jsonBuffer.parseObject(server.arg("plain"));
     ECHOLN("--------------");
-    
+    tickerSetApMode.stop();
     if (rootData.success()) {
         server.sendHeader("Access-Control-Allow-Headers", "*");
         server.sendHeader("Access-Control-Allow-Origin", "*");
@@ -295,36 +309,36 @@ void setLedApMode() {
     digitalWrite(LED_TEST, !digitalRead(LED_TEST));
 }
 
-void caculate_Speed(){
-    speed = (Pul_Encoder - pre_Pul_Encoder)/(12*25*0.001);  //vong/s
-    pre_Pul_Encoder = Pul_Encoder;
-    if(abs(speed)<=(SPEED_DEFAUT-ERROR_SPEED) && millis()>=time_start_speed+1000){
-        // tickerSetMotor.detach();
-        // tickerSpeed.detach();
-        tickerSetMotor.stop();
-        tickerSpeed.stop();
-        TurnOn();
-        ECHOLN("CO VAT CAN!!!!!!");
-        return;
-    }
-    ECHO("vantoc:");
-    ECHOLN(speed);
-}
+// void caculate_Speed(){
+//     speed = (Pul_Encoder - pre_Pul_Encoder)/(12*25*0.001);  //vong/s
+//     pre_Pul_Encoder = Pul_Encoder;
+//     if(abs(speed)<=(SPEED_DEFAUT-ERROR_SPEED) && millis()>=time_start_speed+1000){
+//         // tickerSetMotor.detach();
+//         // tickerSpeed.detach();
+//         tickerSetMotor.stop();
+//         tickerSpeed.stop();
+//         TurnOn();
+//         ECHOLN("CO VAT CAN!!!!!!");
+//         return;
+//     }
+//     ECHO("vantoc:");
+//     ECHOLN(speed);
+// }
 
 
 void setPulMotor() {
-    digitalWrite(LED_TEST_MOTOR, !digitalRead(LED_TEST_MOTOR));
+    //digitalWrite(LED_TEST_MOTOR, !digitalRead(LED_TEST_MOTOR));
     digitalWrite(PIN_PUL_MOTOR, !digitalRead(PIN_PUL_MOTOR));
-    Pul_Motor ++;
-    if(millis() >= test_time + 10000){
-        //tickerSetMotor.detach();
-        //tickerSpeed.detach();
-        tickerSetMotor.stop();
-        tickerSpeed.stop();
-        server.begin();
-        ECHO("so xung phat ra: ");
-        ECHOLN(Pul_Motor);
-    }
+    // Pul_Motor ++;
+    // if(millis() >= test_time + 10000){
+    //     //tickerSetMotor.detach();
+    //     //tickerSpeed.detach();
+    //     tickerSetMotor.stop();
+    //     tickerSpeed.stop();
+    //     server.begin();
+    //     ECHO("so xung phat ra: ");
+    //     ECHOLN(Pul_Motor);
+    // }
 }
 
 String GetFullSSID() {
@@ -461,12 +475,16 @@ void SetupNetwork() {
 
 void StartNormalSever(){
     server.on("/", HTTP_GET, handleRoot);
-    server.on("/turn_on", HTTP_GET, TurnOn);
-    server.on("/turn_off", HTTP_GET, TurnOff);
+    server.on("/go_up", HTTP_GET, GoUp);
+    server.on("/go_down", HTTP_GET, GoDown);
+    server.on("/stop", HTTP_GET, Stop);
+    server.on("/action", HTTP_GET, Action);
     server.on("/control_led", HTTP_POST, ControlLed);
     server.on("/", HTTP_OPTIONS, handleOk);
-    server.on("/turn_on", HTTP_OPTIONS, handleOk);
-    server.on("/turn_off", HTTP_OPTIONS, handleOk);
+    server.on("/go_up", HTTP_OPTIONS, handleOk);
+    server.on("/go_down", HTTP_OPTIONS, handleOk);
+    server.on("/stop", HTTP_OPTIONS, handleOk);
+    server.on("/action", HTTP_OPTIONS, handleOk);
     server.on("/control_led", HTTP_OPTIONS, handleOk);
     server.begin();
     ECHOLN("HTTP server started");
@@ -484,7 +502,7 @@ void handleInterruptMotor(){
 
 void tickerupdate(){
     tickerSetApMode.update();
-    tickerSpeed.update();
+    //tickerSpeed.update();
     tickerSetMotor.update();
 }
 
@@ -494,7 +512,8 @@ void setup() {
     pinMode(PIN_CONFIG, INPUT);
     pinMode(PIN_PUL_MOTOR, OUTPUT);
     pinMode(PIN_DIR_MOTOR, OUTPUT);
-    pinMode(PIN_ENCODER_MOTOR, INPUT_PULLUP);
+    pinMode(PIN_ENCODER_MOTOR, OUTPUT);
+    // pinMode(PIN_ENCODER_MOTOR, INPUT_PULLUP);
     analogWriteRange(255);      //max gia tri PWM la 255
     Serial.begin(115200);
     EEPROM.begin(512);

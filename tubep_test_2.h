@@ -8,10 +8,10 @@
 #include "EEPROM.h"
 
 
-#define LED_TEST D0     // D0 on board
-#define LED_TEST_MOTOR  D4 // D4 onchip GPIO2
+#define LED_TEST D4     // D0 on board
+#define LED_TEST_MOTOR  D8 // D4 onchip GPIO2
 #define PIN_CONFIG D3       // D3 flash GPIO0
-#define PIN_PUL_MOTOR D8    //GPIO16 D0
+#define PIN_PUL_MOTOR D0    //GPIO16 D0
 #define PIN_DIR_MOTOR D5    //GPIO14
 #define PIN_ENCODER_MOTOR D6 //1 TX    //D6 GPIO12    
 #define PIN_LED_RED D2  //GPIO4
@@ -56,8 +56,10 @@ ESP8266WebServer server(HTTP_PORT);
 //normal mode
 void handleOk();
 void handleRoot();
-void TurnOn();
-void TurnOff();
+void GoUp();
+void GoDown();
+void Stop();
+void Action();
 void ControlLed();
 void clearEeprom();
 void SetupNomalMode();
@@ -90,23 +92,11 @@ uint8_t blue_before, blue_after;
 int Pul_Encoder = 0;
 int pre_Pul_Encoder = 0;
 float speed;
-unsigned long Pul_Motor;
 
-unsigned long test_time, time_start_speed;
+// unsigned long Pul_Motor;
+// unsigned long test_time, time_start_speed;
 
 
 Ticker tickerSetApMode(setLedApMode, 200, 0);   //every 200ms
-Ticker tickerSpeed(caculate_Speed, 25, 0);  //every 25ms
+//Ticker tickerSpeed(caculate_Speed, 25, 0);  //every 25ms
 Ticker tickerSetMotor(setPulMotor, 500, 0, MICROS_MICROS);  //every 0.5ms
-
-
-
-
-
-
-
-
-
-
-
-
