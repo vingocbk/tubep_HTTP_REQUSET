@@ -89,6 +89,7 @@ uint8_t fourth_octet;
 uint8_t red_before, red_after;
 uint8_t green_before, green_after;
 uint8_t blue_before, blue_after;
+bool flag_led = true;
 int Pul_Encoder = 0;
 int pre_Pul_Encoder = 0;
 float speed;

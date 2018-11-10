@@ -69,9 +69,6 @@ void ControlLed(){
         String blueStr = rootData["blue"];
         float out_led_red, out_led_green, out_led_blue;
 
-        red_after = atoi(redStr.c_str());
-        green_after = atoi(greenStr.c_str());
-        blue_after = atoi(blueStr.c_str());
 
         if(powerStr == "off"){
             for(int i = 1; i<=255; i++){
@@ -87,25 +84,47 @@ void ControlLed(){
                 delay(10);
                 
             }
-            red_before = 0;
-            green_before = 0;
-            blue_before = 0;                
+            // red_before = 0;
+            // green_before = 0;
+            // blue_before = 0;   
+            flag_led = false;
             server.begin();
             return;
-        }
-        
-        
-        for(int i = 1; i<=255; i++){
-            out_led_red = (float)red_before + (((float)red_after - (float)red_before)/255)*i;
-            out_led_red = abs(out_led_red);
-            analogWrite(PIN_LED_RED, uint8_t(out_led_red));
-            out_led_green = (float)green_before + (((float)green_after - (float)green_before)/255)*i;
-            out_led_green = abs(out_led_green);
-            analogWrite(PIN_LED_GREEN, uint8_t(out_led_green));
-            out_led_blue = (float)blue_before + (((float)blue_after - (float)blue_before)/255)*i;
-            out_led_blue = abs(out_led_blue);
-            analogWrite(PIN_LED_BLUE, uint8_t(out_led_blue));
-            delay(10);
+        }else if(powerStr == "on"){
+            for(int i = 1; i<=255; i++){
+                out_led_red = (float)0 + (((float)red_after - (float)0)/255)*i;
+                out_led_red = abs(out_led_red);
+                analogWrite(PIN_LED_RED, uint8_t(out_led_red));
+                out_led_green = (float)0 + (((float)green_after - (float)0)/255)*i;
+                out_led_green = abs(out_led_green);
+                analogWrite(PIN_LED_GREEN, uint8_t(out_led_green));
+                out_led_blue = (float)0 + (((float)blue_after - (float)0)/255)*i;
+                out_led_blue = abs(out_led_blue);
+                analogWrite(PIN_LED_BLUE, uint8_t(out_led_blue));
+                delay(10);
+            }
+            flag_led = true;
+            server.begin();
+            return;
+        }else if(powerStr == "change" && flag_led == true){
+            red_after = atoi(redStr.c_str());
+            green_after = atoi(greenStr.c_str());
+            blue_after = atoi(blueStr.c_str());
+            for(int i = 1; i<=255; i++){
+                out_led_red = (float)red_before + (((float)red_after - (float)red_before)/255)*i;
+                out_led_red = abs(out_led_red);
+                analogWrite(PIN_LED_RED, uint8_t(out_led_red));
+                out_led_green = (float)green_before + (((float)green_after - (float)green_before)/255)*i;
+                out_led_green = abs(out_led_green);
+                analogWrite(PIN_LED_GREEN, uint8_t(out_led_green));
+                out_led_blue = (float)blue_before + (((float)blue_after - (float)blue_before)/255)*i;
+                out_led_blue = abs(out_led_blue);
+                analogWrite(PIN_LED_BLUE, uint8_t(out_led_blue));
+                delay(10);
+            }
+        }else{
+            ECHOLN("turn on flag_led!");
+            return;
         }
 
         red_before = red_after;
