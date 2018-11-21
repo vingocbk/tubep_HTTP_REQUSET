@@ -47,7 +47,7 @@ void Stop(){
 void Action(){
     ECHOLN("Action");
     digitalWrite(PIN_ENCODER_MOTOR, HIGH);
-    delay(1000);
+    delay(2000);
     digitalWrite(PIN_ENCODER_MOTOR, LOW);
     server.send(200, "text/html", "{\"status\":\"success\"}");
 }
@@ -242,7 +242,10 @@ void ConfigMode(){
         ECHO(".");
         ECHOLN(fourth_octet);
         if (connectToWifi(nssid, npass, ip)) {
+            esid = nssid;
+            epass = npass;
             StartNormalSever();
+            Flag_Normal_Mode = true;
             return;
         }
 
@@ -269,9 +272,9 @@ bool connectToWifi(String nssid, String npass, String ip) {
     WiFi.mode(WIFI_STA);
     delay(100);
     setupIP();
-    WiFi.begin(nssid.c_str(), npass.c_str());
+    //WiFi.begin(nssid.c_str(), npass.c_str());
 
-    if (testWifi()) {
+    if (testWifi(nssid, npass)) {
         ECHOLN("clearing eeprom");
         for (int i = 0; i < EEPROM_WIFI_MAX_CLEAR; ++i){ 
             EEPROM.write(i, 0); 
@@ -305,7 +308,16 @@ bool connectToWifi(String nssid, String npass, String ip) {
     return false;
 }
 
-bool testWifi() {
+bool testWifi(String esid, String epass) {
+    ECHO("Connecting to: ");
+    ECHOLN(esid);
+    WiFi.softAPdisconnect();
+    WiFi.disconnect();
+    server.close();
+    delay(1000);
+    setupIP();      //cai dat ip theo quy dinh
+    WiFi.mode(WIFI_STA);        //bat che do station
+    WiFi.begin(esid.c_str(), epass.c_str());
     int c = 0;
     ECHOLN("Waiting for Wifi to connect");
     while (c < 20) {
@@ -318,6 +330,9 @@ bool testWifi() {
         delay(500);
         ECHO(".");
         c++;
+        if(digitalRead(PIN_CONFIG) == LOW){
+            break;
+        }
     }
     ECHOLN("");
     ECHOLN("Connect timed out");
@@ -377,6 +392,7 @@ void checkButtonConfigClick(){
     if (digitalRead(PIN_CONFIG) == LOW && (ConfigTimeout + CONFIG_HOLD_TIME) <= millis()) { // Khi an nut
         ConfigTimeout = millis();
         //tickerSetMotor.attach(0.2, setLedApMode);  //every 0.2s
+        Flag_Normal_Mode = false;
         tickerSetApMode.start();
         SetupConfigMode();
         StartConfigServer();
@@ -431,21 +447,21 @@ void SetupNomalMode(){
 
 void SetupNetwork() {
     ECHOLN("Reading EEPROM ssid");
-    String esid = "";
+    esid = "";
     for (int i = EEPROM_WIFI_SSID_START; i < EEPROM_WIFI_SSID_END; ++i){
         esid += char(EEPROM.read(i));
     }
     ECHO("SSID: ");
     ECHOLN(esid);
     ECHOLN("Reading EEPROM pass");
-    String epass = "";
+    epass = "";
     for (int i = EEPROM_WIFI_PASS_START; i < EEPROM_WIFI_PASS_END; ++i){
         epass += char(EEPROM.read(i));
     }
     ECHO("PASS: ");
     ECHOLN(epass);
     ECHOLN("Reading EEPROM IP");
-    String eip = "";
+    eip = "";
     for (int i = EEPROM_WIFI_IP_START; i < EEPROM_WIFI_IP_END; ++i){
         eip += char(EEPROM.read(i));
     }
@@ -480,16 +496,7 @@ void SetupNetwork() {
     analogWrite(PIN_LED_GREEN, green_before);
     analogWrite(PIN_LED_BLUE, blue_before);    
     detachIP(eip);  //tach ip thanh 4 kieu uint8_t
-    ECHO("Connecting to: ");
-    ECHOLN(esid);
-    WiFi.softAPdisconnect();
-    WiFi.disconnect();
-    server.close();
-    delay(1000);
-    setupIP();      //cai dat ip theo quy dinh
-    WiFi.mode(WIFI_STA);        //bat che do station
-    WiFi.begin(esid.c_str(), epass.c_str());
-    testWifi();
+    testWifi(esid, epass);
 }
 
 void StartNormalSever(){
@@ -545,6 +552,11 @@ void setup() {
 
 
 void loop() {
+    if (Flag_Normal_Mode == true && WiFi.status() != WL_CONNECTED){
+        if (testWifi(esid, epass)){
+            StartNormalSever();
+        } 
+    } 
     checkButtonConfigClick();
     tickerupdate();
     server.handleClient();

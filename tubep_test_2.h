@@ -77,7 +77,7 @@ void ConfigMode();                  //nhan data tu app
 void setLedApMode();                //hieu ung led
 String GetFullSSID();
 bool connectToWifi(String nssid, String npass, String ip);
-bool testWifi();
+bool testWifi(String esid, String epass);
 void detachIP(String ip);
 void setupIP();
 void handleInterruptMotor();
@@ -94,6 +94,8 @@ int Pul_Encoder = 0;
 int pre_Pul_Encoder = 0;
 float speed;
 
+String esid, epass, eip;
+bool Flag_Normal_Mode = true;
 // unsigned long Pul_Motor;
 // unsigned long test_time, time_start_speed;
 
